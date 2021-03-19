@@ -1,0 +1,12 @@
+- create a (or several) production function (leontieff, cobb douglas)
+- production based on expected sales + desired inventories?
+- consumption based on ?
+- create the market interaction
+- create a class for industries which hold firms: agriculture (12%), food industry (10%), other manufactures (20%), commerce (10%), transportation (12%), construction (5%), services (rest)
+- transform economic structure data into industries and firms
+- transform demographic/labour data into consumer objects (1 consumer per 10k people?)
+- assign people to industries according to the data
+- model behaviour from firms (specific to industries?) and people
+- model government
+- model financial sector?
+- consolidate with actual data

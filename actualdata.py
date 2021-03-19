@@ -19,7 +19,7 @@ def get_api_call(ids, frequency="month", **kwargs):
     return "{}{}?{}&{}".format(API_BASE_URL, "series", urllib.parse.urlencode(kwargs), "collapse=" + frequency)
 
 
-if __name__ == '__main__':
+def actual_data_test():
     # read_csv returns a dataframe object (a table with comma separated values)
     df = pandas.read_csv(get_api_call(
         ["168.1_T_CAMBIOR_D_0_0_26"],
@@ -32,3 +32,8 @@ if __name__ == '__main__':
     matplotlib.pyplot.show()
 
     del df
+
+
+if __name__ == '__main__':
+    # actual_data_test()
+    futuredata.setup_economy()
