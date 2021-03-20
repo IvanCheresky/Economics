@@ -1,3 +1,5 @@
+import math
+
 import pandas
 import multipledispatch
 
@@ -25,7 +27,7 @@ class BasicConsumptionSavingHeuristicBehaviour:
 # a behaviour on how to spend the money set for consumption
 class UtilityMaximizationConsumption:
 
-    def consume(self, amount_to_consume):
+    def consume(self, consumer, amount_to_consume):
         pass
 
 
@@ -42,8 +44,8 @@ class MinFoodFixedProportionsConsumption:
             if i.name == "agriculture":
                 self.agriculture = i
 
-    def consume(self, amount_to_consume):
-        if(self.agriculture.price*30 >= amount_to_consume):
+    def consume(self, consumer, amount_to_consume):
+        if self.agriculture.get_cheapest_firm.price*30 >= amount_to_consume:
             pass
         else:
             pass
@@ -57,6 +59,7 @@ class Consumer:
     # skill, average = 1, to be set as a random distribution?
     skill = 1;
     employed = False
+    wealth = 100
 
     def __init__(self, consumption_saving_behaviour, consumption_behaviour, skill, employed):
         self.consumption_saving_behaviour = consumption_saving_behaviour
@@ -66,7 +69,7 @@ class Consumer:
 
     def consume(self):
         amount_to_consume = self.consumption_saving_behaviour.amount_to_consume()
-        self.consumption_behaviour.consume(amount_to_consume)
+        self.consumption_behaviour.consume(self, amount_to_consume)
 
 
 class LeontiefProductionFunction:
@@ -85,19 +88,27 @@ class Industry:
         self.name = name
         self.industry_firms = industry_firms
 
+    def get_cheapest_firm(self):
+        pass
+
+    def is_stock_sero(self):
+        pass
+
 
 class Firm:
     # stock of the good it produces
-    stock = 0
+    stock = 100
     # list of capital of which the firm disposes
-    domestic_capital = 0
-    foreign_capital = 0
+    domestic_capital = 100
+    foreign_capital = 100
     # list of workers of which the firm disposes
     firm_workers = []
     # amount of money
-    cash = 0
+    cash = 100
     # type of production function
     production_function = None
+    # price of the good it produces
+    price = 1
 
     def __init__(self, stock, capital, firm_workers, cash, production_function):
         self.stock = stock
@@ -179,3 +190,28 @@ def manage_economy():
 # function to log the results of each week
 def log():
     pass
+
+
+# UTLITY METHODS
+def handle_transaction(consumer, industry, amount):
+
+    if industry.is_stock_zero:
+        return
+
+    firm = industry.get_cheapest_firm()
+
+    if firm.price > amount:
+        return
+
+    if math.floor(amount / firm.price) > firm.stock:
+        consumer.wealth -= firm.stock*firm.price
+        remaining_amount = amount - firm.stock*firm.price
+        firm.stock = 0
+        handle_transaction(consumer, industry, remaining_amount)
+        return
+
+    consumer.wealth -= amount
+    firm.stock = firm.stock - amount/firm.price
+
+
+
