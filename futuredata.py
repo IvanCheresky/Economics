@@ -1,6 +1,7 @@
 import pandas
+import multipledispatch
 
-
+# create a dataframe with the data created
 def custom_df():
     data = {"indice_tiempo": ["2020-12-01", "2021-01-01"],
             "tipo_cambio_bna_vendedor": [100, 110]}
@@ -9,6 +10,7 @@ def custom_df():
     return df
 
 
+# a behaviour for the consumption/saving decision
 class BasicConsumptionSavingHeuristicBehaviour:
 
     percent_consumed = 100
@@ -16,9 +18,35 @@ class BasicConsumptionSavingHeuristicBehaviour:
     def __init__(self, percent_consumed):
         self.percent_consumed = percent_consumed
 
+    def amount_to_consume(self, income):
+        return income*self.percent_consumed
 
+
+# a behaviour on how to spend the money set for consumption
 class UtilityMaximizationConsumption:
-    pass
+
+    def consume(self, amount_to_consume):
+        pass
+
+
+# a behaviour on how to spend the money set for consumption
+# requires agricultural sector
+class MinFoodFixedProportionsConsumption:
+
+    agriculture = None
+
+    def __init__(self):
+        global industries
+
+        for i in industries:
+            if i.name == "agriculture":
+                self.agriculture = i
+
+    def consume(self, amount_to_consume):
+        if(self.agriculture.price*30 >= amount_to_consume):
+            pass
+        else:
+            pass
 
 
 class Consumer:
@@ -36,6 +64,10 @@ class Consumer:
         self.skill = skill
         self.employed = employed
 
+    def consume(self):
+        amount_to_consume = self.consumption_saving_behaviour.amount_to_consume()
+        self.consumption_behaviour.consume(amount_to_consume)
+
 
 class LeontiefProductionFunction:
     def produce(self, firm_workers, domestic_capital, foreign_capital):
@@ -45,6 +77,9 @@ class LeontiefProductionFunction:
 class Industry:
     name = ""
     industry_firms = []
+
+    # maybe have a min, average and max price stored for use in functions
+    price = 1
 
     def __init__(self, name, industry_firms):
         self.name = name
@@ -82,9 +117,17 @@ industries = []
 workers = []
 
 
+# setup multidispatch for when there are multiple ways to set up the economy
+@multipledispatch.dispatch()
 def setup_economy():
     create_workers()
     create_industries()
+
+
+# setup multidispatch for when there are multiple ways to set up the economy
+@multipledispatch.dispatch(object)
+def setup_economy():
+    pass
 
 
 def create_workers():
@@ -123,5 +166,16 @@ def create_firms():
 
     return firms
 
+
 def manage_economy():
+    for industry in industries:
+        for firm in industry.industry_firms:
+            firm.produce()
+
+    for consumer in workers:
+        consumer.consume()
+
+
+# function to log the results of each week
+def log():
     pass

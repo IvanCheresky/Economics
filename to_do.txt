@@ -1,4 +1,7 @@
+SORT OF DONE
 - create a (or several) production function (leontieff, cobb douglas)
+
+NOT DONE
 - production based on expected sales + desired inventories?
 - consumption based on ?
 - create the market interaction
@@ -10,3 +13,12 @@
 - model government
 - model financial sector?
 - consolidate with actual data
+- interface where you can create / save / load economic structure
+
+
+
+
+HOW TO IMPLEMENT INTERACTION?
+- Consumer checks consumption/saving behaviour to determine how much to spend
+- Consumer checks consumption behaviour to determine how to distribute expenses -> return a dictionary?
+- Consumer goes to each industry and buys from a random firm? Looks for the cheapest firm? Looks a little bit but not too much?
