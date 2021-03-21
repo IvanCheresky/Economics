@@ -34,6 +34,15 @@ def actual_data_test():
     del df
 
 
+def test():
+    test = Test()
+    return test
+
+class Test:
+    a = 10
+
 if __name__ == '__main__':
     # actual_data_test()
     futuredata.setup_economy()
+    futuredata.manage_economy()
+
