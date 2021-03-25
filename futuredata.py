@@ -49,11 +49,20 @@ class MinFoodFixedProportionsConsumption:
 
     def consume(self, consumer, amount_to_consume):
 
+        # if the agriculture industry is not in the variable, get it
         if self.agriculture is None:
             self.agriculture = get_industry("Agriculture")
 
+        # if no firm with stock is found, consume from non-agriculture industry (WRONG, CHANGE industries[1])
+        if self.agriculture.get_cheapest_firm() is None:
+            handle_consumer_transaction(consumer, industries[1],
+                                        amount_to_consume)
+            return
+
+        # if the amount to spend is inferior to the min food to consume, spend all on food
         if self.agriculture.get_cheapest_firm().price*30 >= amount_to_consume:
             handle_consumer_transaction(consumer, self.agriculture, amount_to_consume)
+        # if the amount to spend is superior to the min food to consume, spend the rest on other industries
         else:
             # this formula is wrong, it should spend the money necessary for 30 units, not assuming the 30 units
             # will have the cheapest price
@@ -194,11 +203,15 @@ def setup_economy(data):
     pass
 
 
+# initialize consumers
 def create_consumers():
     global consumers
-    consumers.append(Consumer(BasicConsumptionSavingHeuristicBehaviour(0.9), MinFoodFixedProportionsConsumption(), 1, True))
+    for i in range (0, 1000):
+        consumers.append(Consumer(BasicConsumptionSavingHeuristicBehaviour(0.9),
+                                  MinFoodFixedProportionsConsumption(), 1, False))
 
 
+# initialize industries
 def create_industries():
     agriculture = Industry("Agriculture", create_firms())
     industries.append(agriculture)
@@ -222,12 +235,24 @@ def create_industries():
     industries.append(services)
 
 
+def get_random_unemployed(quantity):
+    workers = []
+    i = 0
+    for worker in consumers:
+        if not worker.employed:
+            workers.append(worker)
+            i += 1
+            if i >= quantity:
+                return workers
+
+    return workers
+
 def create_firms():
     firms = []
 
     for i in range(0, 10):
         # this is wrong: as it stands, each firm has all consumers as workers
-        firms.append(Firm(0, 100, 100, consumers, 0, LeontiefProductionFunction()))
+        firms.append(Firm(0, 100, 100, get_random_unemployed(10), 0, LeontiefProductionFunction()))
 
     return firms
 
