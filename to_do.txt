@@ -6,6 +6,7 @@ SORT OF DONE
 
 
 NOT DONE
+- price and quantity adjustments based on stock or whatever else
 - make it run a certain number of months
 - SEARCH FOR "WRONG" IN COMMENTS and pass in functions
 - workers should be specific consumers

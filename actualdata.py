@@ -44,5 +44,5 @@ class Test:
 if __name__ == '__main__':
     # actual_data_test()
     futuredata.setup_economy()
-    futuredata.manage_economy()
+    futuredata.manage_economy(10)
 

@@ -1,19 +1,23 @@
 import math
 import pandas
 import multipledispatch
+import openpyxl
+
+# global variables
+period = 0
 
 
 # create a dataframe with the data created
 def custom_df(data):
     df = pandas.DataFrame(data, columns=list(data.keys()))
 
-    print(df)
+    # print(df)
 
     # data = {"indice_tiempo": ["2020-12-01", "2021-01-01"],
     #         "tipo_cambio_bna_vendedor": [100, 110]}
     #
     # df = pandas.DataFrame(data, columns=["indice_tiempo", "tipo_cambio_bna_vendedor"])
-    # return df
+    return df
 
 
 # a behaviour for the consumption/saving decision
@@ -257,21 +261,31 @@ def create_firms():
     return firms
 
 
-def manage_economy():
-    for industry in industries:
-        for firm in industry.industry_firms:
-            firm.produce()
+def manage_economy(periods):
 
-    for consumer in consumers:
-        consumer.consume()
+    dict_of_dataframes = {}
 
-    log({"Category": ["number of firms", "stock", "domestic_capital", "foreign_capital", "firm_workers", "cash"]})
+    for i in range(0, periods - 1):
+        for industry in industries:
+            for firm in industry.industry_firms:
+                firm.produce()
 
-    for industry in industries:
-        industry.log()
+        for consumer in consumers:
+            consumer.consume()
 
-    global data
-    custom_df(data)
+        log({"Category": ["number of firms", "stock", "domestic_capital", "foreign_capital", "firm_workers", "cash"]})
+
+        for industry in industries:
+            industry.log()
+
+        global period
+        global data
+
+        dict_of_dataframes[period] = custom_df(data)
+        period += 1
+
+    print_multiindex(dict_of_dataframes)
+
 
 
 # hold the data to be logged
@@ -288,11 +302,11 @@ def log(log_info):
 # handle consumer to business
 def handle_consumer_transaction(consumer, industry, amount):
 
-    print("consumer wants to spend " + str(amount) + " in industry " + industry.name)
+    # print("consumer wants to spend " + str(amount) + " in industry " + industry.name)
 
     # if no firm in the industry has stock, return
     if industry.is_stock_zero():
-        print("case 1")
+        # print("case 1")
         return
 
     # get the firm with the cheapest price from the industry
@@ -300,13 +314,13 @@ def handle_consumer_transaction(consumer, industry, amount):
 
     # if the amount of money is not enough to buy a single unit return
     if firm.price > amount:
-        print("case 2")
+        # print("case 2")
         return
 
     # if the number of units the consumer buys is higher than the stock from the firm,
     # buy the firm's stock and recurse for the remaining money
     if math.floor(amount / firm.price) > firm.stock:
-        print("case 3")
+        # print("case 3")
         consumer.wealth -= firm.stock*firm.price
         firm.cash += firm.stock*firm.price
         remaining_amount = amount - firm.stock*firm.price
@@ -325,5 +339,10 @@ def handle_consumer_transaction(consumer, industry, amount):
 def handle_business_transaction(consumer, industry, amount):
     pass
 
+
+# fix so that it does not print the first column every time
+def print_multiindex(list_of_dataframes):
+    test = pandas.concat(list_of_dataframes, axis=1)
+    test.to_excel(test)
 
 
