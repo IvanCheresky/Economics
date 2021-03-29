@@ -1,3 +1,20 @@
+BUGS
+print(quantity_sold) shows that the quantity being sold is suddenly 190, which should be possible
+agriculture and food industry stock move the same way for some reason
+
+
+
+firms look for desired production
+-> firms see if they can produce that much
+-> if they can't, they enter the labor market and the capital market to be able to (check if investment is desirable in
+the long term?)
+-> once this round is over, the firms actually produce what they want
+-> the firms pay the workers
+-> the workers consume
+-> the round starts again
+
+
+
 SORT OF DONE
 - create dataframe with the data from every month
 - create a (or several) production function (leontieff, cobb douglas)
@@ -8,7 +25,7 @@ SORT OF DONE
 NOT DONE
 - price and quantity adjustments based on stock or whatever else
 - make it run a certain number of months
-- SEARCH FOR "WRONG" IN COMMENTS and pass in functions
+- SEARCH FOR "WRONG" and "change" IN COMMENTS and pass in functions
 - workers should be specific consumers
 - create the capital goods market interaction
 - create the labor market interaction
@@ -24,8 +41,6 @@ NOT DONE
 - interface where you can create / save / load economic structure from network diagram
 - firm ownership among consumers, dividends
 - hiring workers
-
-BUGS
 
 
 

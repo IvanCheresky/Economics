@@ -38,8 +38,12 @@ def test():
     test = Test()
     return test
 
+
 class Test:
-    a = 10
+    stock = 0
+    def __init__(self, stock):
+        self.stock = stock
+
 
 if __name__ == '__main__':
     # actual_data_test()

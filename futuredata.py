@@ -1,7 +1,7 @@
 import math
 import pandas
 import multipledispatch
-import openpyxl
+import random
 
 # global variables
 period = 0
@@ -105,6 +105,32 @@ class LeontiefProductionFunction:
         return min(len(firm_workers), domestic_capital + foreign_capital)
 
 
+class DesiredStockFirmBehaviour:
+    desired_stock = 0
+    prod_adj_parameter = 0
+    price_adj_parameter = 0
+
+    def __init__(self, desired_stock, prod_adj_parameter, price_adj_parameter):
+        self.desired_stock = desired_stock
+        self.prod_adj_parameter = prod_adj_parameter
+        self.price_adj_parameter = price_adj_parameter
+
+    def get_price(self, price, stock):
+        if stock == 0:
+            return price * (1 + self.price_adj_parameter * 2)
+
+        # the new price is the old price plus the percent over/under the desired stock (min 0.5, max 2)
+        # multiplied by a parameter
+        return price*(1 + self.price_adj_parameter*
+                      clamp((self.desired_stock - stock)/stock, 0.5, 2))
+
+    def get_quantity(self, quantity_sold, stock):
+        # the new quantity is equal to the last quantity sold plus the excess/shortage of stock
+        # multiplied by a parameter
+        print(quantity_sold)
+        return max(0, quantity_sold + self.prod_adj_parameter*(self.desired_stock - stock))
+
+
 class Industry:
     name = ""
     industry_firms = []
@@ -117,6 +143,7 @@ class Industry:
         self.industry_firms = industry_firms
 
     def get_cheapest_firm(self):
+        random.shuffle(self.industry_firms)
         cheapest_firm = None
         for firm in self.industry_firms:
             if firm.stock == 0:
@@ -172,19 +199,42 @@ class Firm:
     cash = 100
     # type of production function
     production_function = None
+    # how the firm decides the quantity and price of the period
+    production_behaviour = None
     # price of the good it produces
     price = 1
+    # wage of workers in the firm
+    wage = 0.5
+    # the quantity sold the last period
+    quantity_sold = 0
 
-    def __init__(self, stock, domestic_capital, foreign_capital, firm_workers, cash, production_function):
+    def __init__(self, stock, domestic_capital, foreign_capital, firm_workers, cash, production_function,
+                 production_behaviour):
         self.stock = stock
         self.domestic_capital = domestic_capital
         self.foreign_capital = foreign_capital
         self.firm_workers = firm_workers
         self.cash = cash
         self.production_function = production_function
+        self.production_behaviour = production_behaviour
+        # quantity sold in the previous period arbitrarily set at 10, change?
+        self.quantity_sold = 10
 
     def produce(self):
-        self.stock += self.production_function.produce(self.firm_workers, self.domestic_capital, self.foreign_capital)
+        self.price = self.production_behaviour.get_price(self.price, self.stock)
+        desired_production = self.production_behaviour.get_quantity(self.quantity_sold, self.stock)
+
+        self.stock += min(
+            desired_production,
+            self.production_function.produce(self.firm_workers, self.domestic_capital, self.foreign_capital))
+
+        self.quantity_sold = 0
+
+    # keep in firms? if here cannot have different wages per worker
+    def pay_wages(self):
+        for worker in self.firm_workers:
+            worker.wealth += self.wage
+            self.cash -= self.wage
 
 
 # variables that characterize the economy
@@ -256,8 +306,8 @@ def create_firms():
 
     for i in range(0, 10):
         # this is wrong: as it stands, each firm has all consumers as workers
-        firms.append(Firm(0, 100, 100, get_random_unemployed(10), 0, LeontiefProductionFunction()))
-
+        firms.append(Firm(100, 100, 100, get_random_unemployed(10), 100, LeontiefProductionFunction(),
+                          DesiredStockFirmBehaviour(100, 0.1, 1)))
     return firms
 
 
@@ -269,6 +319,7 @@ def manage_economy(periods):
         for industry in industries:
             for firm in industry.industry_firms:
                 firm.produce()
+                firm.pay_wages()
 
         for consumer in consumers:
             consumer.consume()
@@ -324,6 +375,8 @@ def handle_consumer_transaction(consumer, industry, amount):
         consumer.wealth -= firm.stock*firm.price
         firm.cash += firm.stock*firm.price
         remaining_amount = amount - firm.stock*firm.price
+        # let a method in the firm class handle this? change?
+        firm.quantity_sold += firm.stock
         firm.stock = 0
         handle_consumer_transaction(consumer, industry, remaining_amount)
         return
@@ -332,6 +385,7 @@ def handle_consumer_transaction(consumer, industry, amount):
     # start by making the amount spent a multiple of the price so that there are no partial goods
     actual_amount = math.floor(amount/firm.price)*firm.price
     consumer.wealth -= actual_amount
+    firm.quantity_sold += firm.stock - actual_amount/firm.price
     firm.stock = firm.stock - actual_amount/firm.price
 
 
@@ -343,6 +397,8 @@ def handle_business_transaction(consumer, industry, amount):
 # fix so that it does not print the first column every time
 def print_multiindex(list_of_dataframes):
     test = pandas.concat(list_of_dataframes, axis=1)
-    test.to_excel(test)
+    test.to_csv("test.csv")
 
 
+def clamp(n, smallest, largest):
+    return max(smallest, min(n, largest))
