@@ -1,13 +1,14 @@
 BUGS
-print(quantity_sold) shows that the quantity being sold is suddenly 190, which should be possible
-agriculture and food industry stock move the same way for some reason
-
+PRICE BECOMES TOO HIGH
+firms: after period 4 they sell 0
+consumers with negative wealth
 
 
 firms look for desired production
 -> firms see if they can produce that much
 -> if they can't, they enter the labor market and the capital market to be able to (check if investment is desirable in
 the long term?)
+-> unemployed enter the labor market
 -> once this round is over, the firms actually produce what they want
 -> the firms pay the workers
 -> the workers consume
@@ -23,6 +24,7 @@ SORT OF DONE
 
 
 NOT DONE
+- add avg price and production to table
 - price and quantity adjustments based on stock or whatever else
 - make it run a certain number of months
 - SEARCH FOR "WRONG" and "change" IN COMMENTS and pass in functions

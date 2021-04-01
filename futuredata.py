@@ -78,6 +78,8 @@ class MinFoodFixedProportionsConsumption:
 
 
 class Consumer:
+    # identifier to keep track
+    identifier = 0
     # how he decides how much to consume and save
     consumption_saving_behaviour = None
     # how he decides what to buy
@@ -89,7 +91,8 @@ class Consumer:
     wealth = 100
     income = 100
 
-    def __init__(self, consumption_saving_behaviour, consumption_behaviour, skill, employed):
+    def __init__(self, identifier, consumption_saving_behaviour, consumption_behaviour, skill, employed):
+        self.identifier = identifier
         self.consumption_saving_behaviour = consumption_saving_behaviour
         self.consumption_behaviour = consumption_behaviour
         self.skill = skill
@@ -122,12 +125,11 @@ class DesiredStockFirmBehaviour:
         # the new price is the old price plus the percent over/under the desired stock (min 0.5, max 2)
         # multiplied by a parameter
         return price*(1 + self.price_adj_parameter*
-                      clamp((self.desired_stock - stock)/stock, 0.5, 2))
+                      clamp((self.desired_stock - stock)/stock, -0.5, 2))
 
     def get_quantity(self, quantity_sold, stock):
         # the new quantity is equal to the last quantity sold plus the excess/shortage of stock
         # multiplied by a parameter
-        print(quantity_sold)
         return max(0, quantity_sold + self.prod_adj_parameter*(self.desired_stock - stock))
 
 
@@ -138,8 +140,10 @@ class Industry:
     # maybe have a min, average and max price stored for use in functions
     price = 1
 
-    def __init__(self, name, industry_firms):
+    def __init__(self, name):
         self.name = name
+
+    def add_firms(self, industry_firms):
         self.industry_firms = industry_firms
 
     def get_cheapest_firm(self):
@@ -188,6 +192,10 @@ def get_industry(name):
 
 
 class Firm:
+    # identifier to keep track
+    identifier = 0
+    # the industry where the firm operates
+    industry = None
     # stock of the good it produces
     stock = 0
     # list of capital of which the firm disposes
@@ -207,26 +215,42 @@ class Firm:
     wage = 0.5
     # the quantity sold the last period
     quantity_sold = 0
+    # the quantity the firm wants to produce
+    desired_production = 0
 
-    def __init__(self, stock, domestic_capital, foreign_capital, firm_workers, cash, production_function,
+    def __init__(self, identifier, industry, stock, domestic_capital, foreign_capital, firm_workers, cash, production_function,
                  production_behaviour):
+        self.identifier = identifier
+        self.industry = industry
         self.stock = stock
         self.domestic_capital = domestic_capital
         self.foreign_capital = foreign_capital
         self.firm_workers = firm_workers
+        for worker in self.firm_workers:
+            worker.employed = True
         self.cash = cash
         self.production_function = production_function
         self.production_behaviour = production_behaviour
         # quantity sold in the previous period arbitrarily set at 10, change?
         self.quantity_sold = 10
 
+    def production_objective(self):
+        self.desired_production = self.production_behaviour.get_quantity(self.quantity_sold, self.stock)
+
     def produce(self):
         self.price = self.production_behaviour.get_price(self.price, self.stock)
-        desired_production = self.production_behaviour.get_quantity(self.quantity_sold, self.stock)
 
-        self.stock += min(
-            desired_production,
-            self.production_function.produce(self.firm_workers, self.domestic_capital, self.foreign_capital))
+        print("PERIOD " + str(period) + ": firm in industry " + self.industry.name +
+              " sold " + str(self.quantity_sold) + " last period and has a stock of " +
+              str(self.stock) + " while it wants a stock of 100")
+
+        self.stock += math.floor(min(
+            self.desired_production,
+            self.production_function.produce(self.firm_workers, self.domestic_capital, self.foreign_capital)))
+
+        print("therefore it produces: " + str(math.floor(min(
+            self.desired_production,
+            self.production_function.produce(self.firm_workers, self.domestic_capital, self.foreign_capital)))))
 
         self.quantity_sold = 0
 
@@ -257,35 +281,47 @@ def setup_economy(data):
     pass
 
 
+consumer_identifier = 0
+
+
 # initialize consumers
 def create_consumers():
     global consumers
-    for i in range (0, 1000):
-        consumers.append(Consumer(BasicConsumptionSavingHeuristicBehaviour(0.9),
+    global consumer_identifier
+    for i in range(0, 1000):
+        consumers.append(Consumer(consumer_identifier,BasicConsumptionSavingHeuristicBehaviour(0.9),
                                   MinFoodFixedProportionsConsumption(), 1, False))
+        consumer_identifier += 1
 
 
 # initialize industries
 def create_industries():
-    agriculture = Industry("Agriculture", create_firms())
+    agriculture = Industry("Agriculture")
+    agriculture.add_firms(create_firms(agriculture))
     industries.append(agriculture)
 
-    food_industry = Industry("Food Industry", create_firms())
+    food_industry = Industry("Food Industry")
+    food_industry.add_firms(create_firms(food_industry))
     industries.append(food_industry)
 
-    other_manufactures = Industry("Other Manufactures", create_firms())
+    other_manufactures = Industry("Other Manufactures")
+    other_manufactures.add_firms(create_firms(other_manufactures))
     industries.append(other_manufactures)
 
-    commerce = Industry("Commerce", create_firms())
+    commerce = Industry("Commerce")
+    commerce.add_firms(create_firms(commerce))
     industries.append(commerce)
 
-    transportation = Industry("Transportation", create_firms())
+    transportation = Industry("Transportation")
+    transportation.add_firms(create_firms(transportation))
     industries.append(transportation)
 
-    construction = Industry("Construction", create_firms())
+    construction = Industry("Construction")
+    construction.add_firms(create_firms(construction))
     industries.append(construction)
 
-    services = Industry("Services", create_firms())
+    services = Industry("Services")
+    services.add_firms(create_firms(services))
     industries.append(services)
 
 
@@ -301,13 +337,18 @@ def get_random_unemployed(quantity):
 
     return workers
 
-def create_firms():
-    firms = []
 
+firm_identifier = 0
+
+
+def create_firms(industry):
+    firms = []
+    global firm_identifier
     for i in range(0, 10):
         # this is wrong: as it stands, each firm has all consumers as workers
-        firms.append(Firm(100, 100, 100, get_random_unemployed(10), 100, LeontiefProductionFunction(),
-                          DesiredStockFirmBehaviour(100, 0.1, 1)))
+        firms.append(Firm(firm_identifier, industry, 100, 100, 100, get_random_unemployed(10), 100,
+                          LeontiefProductionFunction(), DesiredStockFirmBehaviour(100, 1, 0.1)))
+        firm_identifier += 1
     return firms
 
 
@@ -316,27 +357,34 @@ def manage_economy(periods):
     dict_of_dataframes = {}
 
     for i in range(0, periods - 1):
+        global period
+        global data
+
         for industry in industries:
             for firm in industry.industry_firms:
+                firm.production_objective()
                 firm.produce()
                 firm.pay_wages()
 
         for consumer in consumers:
+            # if consumer.employed:
+            #     print("(before) In period: " + str(period) + " consumer " + str(consumer.identifier) + " has a wealth of " +
+            #           str(consumer.wealth))
             consumer.consume()
+            # if consumer.employed:
+            #     print("(after) In period: " + str(period) + " consumer " + str(consumer.identifier) + " has a wealth of " +
+            #           str(consumer.wealth))
+
 
         log({"Category": ["number of firms", "stock", "domestic_capital", "foreign_capital", "firm_workers", "cash"]})
 
         for industry in industries:
             industry.log()
 
-        global period
-        global data
-
         dict_of_dataframes[period] = custom_df(data)
         period += 1
 
     print_multiindex(dict_of_dataframes)
-
 
 
 # hold the data to be logged
@@ -371,7 +419,6 @@ def handle_consumer_transaction(consumer, industry, amount):
     # if the number of units the consumer buys is higher than the stock from the firm,
     # buy the firm's stock and recurse for the remaining money
     if math.floor(amount / firm.price) > firm.stock:
-        # print("case 3")
         consumer.wealth -= firm.stock*firm.price
         firm.cash += firm.stock*firm.price
         remaining_amount = amount - firm.stock*firm.price
@@ -385,7 +432,7 @@ def handle_consumer_transaction(consumer, industry, amount):
     # start by making the amount spent a multiple of the price so that there are no partial goods
     actual_amount = math.floor(amount/firm.price)*firm.price
     consumer.wealth -= actual_amount
-    firm.quantity_sold += firm.stock - actual_amount/firm.price
+    firm.quantity_sold += actual_amount/firm.price
     firm.stock = firm.stock - actual_amount/firm.price
 
 
