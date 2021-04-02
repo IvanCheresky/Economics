@@ -1,7 +1,5 @@
 BUGS
-PRICE BECOMES TOO HIGH
-firms: after period 4 they sell 0
-consumers with negative wealth
+
 
 
 firms look for desired production
@@ -9,6 +7,7 @@ firms look for desired production
 -> if they can't, they enter the labor market and the capital market to be able to (check if investment is desirable in
 the long term?)
 -> unemployed enter the labor market
+-> how do firms decide the wage to offer? wage offered adjusted by periods without finding workers? how do consumers decide the reservation wage? wage as a function of time unemployed and wealth
 -> once this round is over, the firms actually produce what they want
 -> the firms pay the workers
 -> the workers consume
@@ -25,8 +24,10 @@ SORT OF DONE
 
 NOT DONE
 - add avg price and production to table
+- order code (all static code in the same place, handling of expenditure inside consumer and firm classes)
 - price and quantity adjustments based on stock or whatever else
 - make it run a certain number of months
+- add in consumption as a function of desired wealth
 - SEARCH FOR "WRONG" and "change" IN COMMENTS and pass in functions
 - workers should be specific consumers
 - create the capital goods market interaction

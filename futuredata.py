@@ -63,7 +63,7 @@ class MinFoodFixedProportionsConsumption:
                                         amount_to_consume)
             return
 
-        # if the amount to spend is inferior to the min food to consume, spend all on food
+        # if the amount to spend is inferior to the min food to consume, spend all on food, CHANGE 30
         if self.agriculture.get_cheapest_firm().price*30 >= amount_to_consume:
             handle_consumer_transaction(consumer, self.agriculture, amount_to_consume)
         # if the amount to spend is superior to the min food to consume, spend the rest on other industries
@@ -90,6 +90,8 @@ class Consumer:
     # keep a wealth and an income parameters?
     wealth = 100
     income = 100
+    # the minimum wage he will accept a job for
+    reservation_wage = 40
 
     def __init__(self, identifier, consumption_saving_behaviour, consumption_behaviour, skill, employed):
         self.identifier = identifier
@@ -101,6 +103,12 @@ class Consumer:
     def consume(self):
         amount_to_consume = self.consumption_saving_behaviour.amount_to_consume(self.income)
         self.consumption_behaviour.consume(self, amount_to_consume)
+
+    def update_reservation_wage(self):
+        if not self.employed:
+            # WRONG, check how this adjusts over time with reasonable values
+            # wealth should be studied in relation to something else (ie the cost of food)
+            self.reservation_wage = self.reservation_wage*(0.9**(1/self.wealth))
 
 
 class LeontiefProductionFunction:
@@ -212,14 +220,14 @@ class Firm:
     # price of the good it produces
     price = 1
     # wage of workers in the firm
-    wage = 0.5
+    wage = 40
     # the quantity sold the last period
     quantity_sold = 0
     # the quantity the firm wants to produce
     desired_production = 0
 
-    def __init__(self, identifier, industry, stock, domestic_capital, foreign_capital, firm_workers, cash, production_function,
-                 production_behaviour):
+    def __init__(self, identifier, industry, stock, domestic_capital, foreign_capital, firm_workers, cash,
+                 production_function, production_behaviour):
         self.identifier = identifier
         self.industry = industry
         self.stock = stock
@@ -237,20 +245,28 @@ class Firm:
     def production_objective(self):
         self.desired_production = self.production_behaviour.get_quantity(self.quantity_sold, self.stock)
 
+    # if the firm cannot produce as much as it wants due to a labor limitation, it might want to hire workers
+    def should_enter_labor_market(self):
+        pass
+
+    # if the firm cannot produce as much as it wants due to a capital limitation, it might want to buy capital
+    def should_enter_capital_market(self):
+        pass
+
     def produce(self):
         self.price = self.production_behaviour.get_price(self.price, self.stock)
 
-        print("PERIOD " + str(period) + ": firm in industry " + self.industry.name +
-              " sold " + str(self.quantity_sold) + " last period and has a stock of " +
-              str(self.stock) + " while it wants a stock of 100")
+        # print("PERIOD " + str(period) + ": firm in industry " + self.industry.name +
+        #       " sold " + str(self.quantity_sold) + " last period and has a stock of " +
+        #       str(self.stock) + " while it wants a stock of 100")
 
         self.stock += math.floor(min(
             self.desired_production,
             self.production_function.produce(self.firm_workers, self.domestic_capital, self.foreign_capital)))
 
-        print("therefore it produces: " + str(math.floor(min(
-            self.desired_production,
-            self.production_function.produce(self.firm_workers, self.domestic_capital, self.foreign_capital)))))
+        # print("therefore it produces: " + str(math.floor(min(
+        #     self.desired_production,
+        #     self.production_function.produce(self.firm_workers, self.domestic_capital, self.foreign_capital)))))
 
         self.quantity_sold = 0
 
@@ -258,6 +274,7 @@ class Firm:
     def pay_wages(self):
         for worker in self.firm_workers:
             worker.wealth += self.wage
+            worker.income = self.wage
             self.cash -= self.wage
 
 
@@ -368,12 +385,12 @@ def manage_economy(periods):
 
         for consumer in consumers:
             # if consumer.employed:
-            #     print("(before) In period: " + str(period) + " consumer " + str(consumer.identifier) + " has a wealth of " +
-            #           str(consumer.wealth))
+            #     print("(before) In period: " + str(period) + " consumer " + str(consumer.identifier)
+            #           + " has a wealth of " + str(consumer.wealth))
             consumer.consume()
             # if consumer.employed:
-            #     print("(after) In period: " + str(period) + " consumer " + str(consumer.identifier) + " has a wealth of " +
-            #           str(consumer.wealth))
+            #     print("(after) In period: " + str(period) + " consumer " + str(consumer.identifier)
+            #           + " has a wealth of " + str(consumer.wealth))
 
 
         log({"Category": ["number of firms", "stock", "domestic_capital", "foreign_capital", "firm_workers", "cash"]})
