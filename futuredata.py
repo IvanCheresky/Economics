@@ -89,7 +89,7 @@ class Consumer:
     employed = False
     # keep a wealth and an income parameters?
     wealth = 100
-    income = 100
+    income = 0
     # the minimum wage he will accept a job for
     reservation_wage = 40
 
@@ -108,12 +108,19 @@ class Consumer:
         if not self.employed:
             # WRONG, check how this adjusts over time with reasonable values
             # wealth should be studied in relation to something else (ie the cost of food)
+            # should also increase reservation wage if wealth increases
             self.reservation_wage = self.reservation_wage*(0.9**(1/self.wealth))
+
+    def searching_job(self):
+        return self.reservation_wage >= self.income
 
 
 class LeontiefProductionFunction:
     def produce(self, firm_workers, domestic_capital, foreign_capital):
         return min(len(firm_workers), domestic_capital + foreign_capital)
+
+    def required_workers(self, desired_production, domestic_capital, foreign_capital):
+        return max(desired_production, domestic_capital + foreign_capital)
 
 
 class DesiredStockFirmBehaviour:
@@ -236,6 +243,7 @@ class Firm:
         self.firm_workers = firm_workers
         for worker in self.firm_workers:
             worker.employed = True
+            worker.income += self.wage
         self.cash = cash
         self.production_function = production_function
         self.production_behaviour = production_behaviour
@@ -276,6 +284,20 @@ class Firm:
             worker.wealth += self.wage
             worker.income = self.wage
             self.cash -= self.wage
+
+    # hiring or not hiring should be a short term calculation based on short term production necesities
+    def hire(self, searching_workers):
+        objective_qty_workers = self.production_function.required_workers(self.desired_production,
+                                                                          self.domestic_capital,
+                                                                          self.foreign_capital)
+
+        while objective_qty_workers > len(self.firm_workers) and len(searching_workers) > 0:
+            new_worker = searching_workers.pop(0)
+            self.firm_workers.append(new_worker)
+            # WRONG, should not override other types of income
+            # WRONG, should receive a wage equal to his reservation wage, needs individual wages inside a firm
+            new_worker.income = self.wage
+
 
 
 # variables that characterize the economy
@@ -372,14 +394,27 @@ def create_firms(industry):
 def manage_economy(periods):
 
     dict_of_dataframes = {}
+    seeking_workers = []
 
     for i in range(0, periods - 1):
         global period
         global data
 
+        seeking_workers.clear()
+
+        for consumer in consumers:
+            if consumer.searching_job():
+                seeking_workers.append(consumer)
+
+        seeking_workers = sorted(seeking_workers, key=lambda x: x.reservation_wage)
+
         for industry in industries:
             for firm in industry.industry_firms:
                 firm.production_objective()
+                firm.hire(seeking_workers)
+
+        for industry in industries:
+            for firm in industry.industry_firms:
                 firm.produce()
                 firm.pay_wages()
 
