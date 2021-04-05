@@ -1,5 +1,5 @@
 BUGS
-
+hiring/firing working weirdly
 
 
 firms look for desired production
@@ -23,9 +23,8 @@ SORT OF DONE
 
 
 NOT DONE
-- separate other income and wage
-- firing workers
 - add avg price and production to table, also unemployed, employed,
+- make table columns always appear in the same order
 - order code (all static code in the same place, handling of expenditure inside consumer and firm classes)
 - price and quantity adjustments based on stock or whatever else
 - make it run a certain number of months

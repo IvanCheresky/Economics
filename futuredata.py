@@ -89,7 +89,8 @@ class Consumer:
     employed = False
     # keep a wealth and an income parameters?
     wealth = 100
-    income = 0
+    wage = 0
+    other_income = 0
     # the minimum wage he will accept a job for
     reservation_wage = 40
 
@@ -101,7 +102,7 @@ class Consumer:
         self.employed = employed
 
     def consume(self):
-        amount_to_consume = self.consumption_saving_behaviour.amount_to_consume(self.income)
+        amount_to_consume = self.consumption_saving_behaviour.amount_to_consume(self.wage + self.other_income)
         self.consumption_behaviour.consume(self, amount_to_consume)
 
     def update_reservation_wage(self):
@@ -112,15 +113,21 @@ class Consumer:
             self.reservation_wage = self.reservation_wage*(0.9**(1/self.wealth))
 
     def searching_job(self):
-        return self.reservation_wage >= self.income
+        return self.reservation_wage >= self.wage
 
 
 class LeontiefProductionFunction:
+    # WRONG, should be set on init and be different per industry
+    worker_productivity = 50
+    capital_productivity = 50
+
     def produce(self, firm_workers, domestic_capital, foreign_capital):
-        return min(len(firm_workers), domestic_capital + foreign_capital)
+        return min(self.worker_productivity*len(firm_workers),
+                   self.capital_productivity*(domestic_capital + foreign_capital))
 
     def required_workers(self, desired_production, domestic_capital, foreign_capital):
-        return max(desired_production, domestic_capital + foreign_capital)
+        return max(desired_production/self.worker_productivity,
+                   self.capital_productivity*(domestic_capital + foreign_capital))
 
 
 class DesiredStockFirmBehaviour:
@@ -243,7 +250,7 @@ class Firm:
         self.firm_workers = firm_workers
         for worker in self.firm_workers:
             worker.employed = True
-            worker.income += self.wage
+            worker.wage = self.wage
         self.cash = cash
         self.production_function = production_function
         self.production_behaviour = production_behaviour
@@ -281,9 +288,23 @@ class Firm:
     # keep in firms? if here cannot have different wages per worker
     def pay_wages(self):
         for worker in self.firm_workers:
+            worker.wage = self.wage
             worker.wealth += self.wage
-            worker.income = self.wage
             self.cash -= self.wage
+
+    def fire(self):
+        objective_qty_workers = self.production_function.required_workers(self.desired_production,
+                                                                          self.domestic_capital,
+                                                                          self.foreign_capital)
+
+        while objective_qty_workers < len(self.firm_workers):
+            if len(self.firm_workers) == 0:
+                return
+            else:
+                worker = self.firm_workers.pop(0)
+                worker.wage = 0
+                worker.employed = False
+
 
     # hiring or not hiring should be a short term calculation based on short term production necesities
     def hire(self, searching_workers):
@@ -294,9 +315,9 @@ class Firm:
         while objective_qty_workers > len(self.firm_workers) and len(searching_workers) > 0:
             new_worker = searching_workers.pop(0)
             self.firm_workers.append(new_worker)
-            # WRONG, should not override other types of income
             # WRONG, should receive a wage equal to his reservation wage, needs individual wages inside a firm
-            new_worker.income = self.wage
+            new_worker.wage = self.wage
+            new_worker.employed = True
 
 
 
@@ -402,22 +423,37 @@ def manage_economy(periods):
 
         seeking_workers.clear()
 
+        # 1) industries estimate desired production
+        # 2) industries fire excess workers
+        for industry in industries:
+            for firm in industry.industry_firms:
+                firm.production_objective()
+                firm.fire()
+
+        # 3) consumers decide if they are looking for a job
         for consumer in consumers:
             if consumer.searching_job():
                 seeking_workers.append(consumer)
 
         seeking_workers = sorted(seeking_workers, key=lambda x: x.reservation_wage)
 
+        # 4) industries hire required workers
+        random.shuffle(industries)
         for industry in industries:
+            random.shuffle(industry.industry_firms)
             for firm in industry.industry_firms:
-                firm.production_objective()
                 firm.hire(seeking_workers)
 
+        # 5) industries produce and pay wages
+        random.shuffle(industries)
         for industry in industries:
+            random.shuffle(industry.industry_firms)
             for firm in industry.industry_firms:
                 firm.produce()
                 firm.pay_wages()
 
+        # 6) consumers consume
+        random.shuffle(consumers)
         for consumer in consumers:
             # if consumer.employed:
             #     print("(before) In period: " + str(period) + " consumer " + str(consumer.identifier)
