@@ -417,7 +417,7 @@ def manage_economy(periods):
     dict_of_dataframes = {}
     seeking_workers = []
 
-    for i in range(0, periods - 1):
+    for i in range(0, periods):
         global period
         global data
 
