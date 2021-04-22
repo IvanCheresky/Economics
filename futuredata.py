@@ -76,14 +76,14 @@ class MinFoodFixedProportionsConsumption:
 
 
 class Consumer:
-    # keep a wealth and an income parameters?
-    wealth = 100
-    wage = 0
-    other_income = 0
-    # the minimum wage he will accept a job for
-    reservation_wage = 40
-
     def __init__(self, identifier, consumption_saving_behaviour, consumption_behaviour, skill, employed):
+        # keep a wealth and an income parameters?
+        self.wealth = 100
+        self.wage = 0
+        self.other_income = 0
+        # the minimum wage he will accept a job for
+        self.reservation_wage = 40
+
         # identifier to keep track
         self.identifier = identifier
         # how he decides how much to consume and save
@@ -146,13 +146,13 @@ class DesiredStockFirmBehaviour:
 
 
 class Industry:
-    name = ""
-    industry_firms = []
-
-    # maybe have a min, average and max price stored for use in functions
-    price = 1
-
     def __init__(self, name):
+        self.name = ""
+        self.industry_firms = []
+
+        # maybe have a min, average and max price stored for use in functions
+        self.price = 1
+
         self.name = name
 
     def add_firms(self, industry_firms):
@@ -204,15 +204,15 @@ def get_industry(name):
 
 
 class Firm:
-    # price of the good it produces
-    price = 1
-    # wage of workers in the firm
-    wage = 40
-    # the quantity the firm wants to produce
-    desired_production = 0
-
     def __init__(self, identifier, industry, stock, domestic_capital, foreign_capital, firm_workers, cash,
                  production_function, production_behaviour):
+        # price of the good it produces
+        self.price = 1
+        # wage of workers in the firm
+        self.wage = 40
+        # the quantity the firm wants to produce
+        self.desired_production = 0
+
         # identifier to keep track
         self.identifier = identifier
         # the industry where the firm operates
