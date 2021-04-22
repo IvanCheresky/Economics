@@ -8,8 +8,8 @@ period = 0
 
 
 # create a dataframe with the data created
-def custom_df(data):
-    df = pandas.DataFrame(data, columns=list(data.keys()))
+def custom_df(info):
+    df = pandas.DataFrame(info, columns=list(data.keys()))
 
     # print(df)
 
@@ -22,8 +22,6 @@ def custom_df(data):
 
 # a behaviour for the consumption/saving decision
 class BasicConsumptionSavingHeuristicBehaviour:
-
-    percent_consumed = 1
 
     def __init__(self, percent_consumed):
         self.percent_consumed = percent_consumed
@@ -78,15 +76,6 @@ class MinFoodFixedProportionsConsumption:
 
 
 class Consumer:
-    # identifier to keep track
-    identifier = 0
-    # how he decides how much to consume and save
-    consumption_saving_behaviour = None
-    # how he decides what to buy
-    consumption_behaviour = None
-    # skill, average = 1, to be set as a random distribution?
-    skill = 1
-    employed = False
     # keep a wealth and an income parameters?
     wealth = 100
     wage = 0
@@ -95,9 +84,13 @@ class Consumer:
     reservation_wage = 40
 
     def __init__(self, identifier, consumption_saving_behaviour, consumption_behaviour, skill, employed):
+        # identifier to keep track
         self.identifier = identifier
+        # how he decides how much to consume and save
         self.consumption_saving_behaviour = consumption_saving_behaviour
+        # how he decides what to buy
         self.consumption_behaviour = consumption_behaviour
+        # skill, average = 1, to be set as a random distribution?
         self.skill = skill
         self.employed = employed
 
@@ -131,9 +124,6 @@ class LeontiefProductionFunction:
 
 
 class DesiredStockFirmBehaviour:
-    desired_stock = 0
-    prod_adj_parameter = 0
-    price_adj_parameter = 0
 
     def __init__(self, desired_stock, prod_adj_parameter, price_adj_parameter):
         self.desired_stock = desired_stock
@@ -146,7 +136,7 @@ class DesiredStockFirmBehaviour:
 
         # the new price is the old price plus the percent over/under the desired stock (min 0.5, max 2)
         # multiplied by a parameter
-        return price*(1 + self.price_adj_parameter*
+        return price*(1 + self.price_adj_parameter *
                       clamp((self.desired_stock - stock)/stock, -0.5, 2))
 
     def get_quantity(self, quantity_sold, stock):
@@ -214,45 +204,34 @@ def get_industry(name):
 
 
 class Firm:
-    # identifier to keep track
-    identifier = 0
-    # the industry where the firm operates
-    industry = None
-    # stock of the good it produces
-    stock = 0
-    # list of capital of which the firm disposes
-    domestic_capital = 100
-    foreign_capital = 100
-    # list of workers of which the firm disposes
-    firm_workers = []
-    # amount of money
-    cash = 100
-    # type of production function
-    production_function = None
-    # how the firm decides the quantity and price of the period
-    production_behaviour = None
     # price of the good it produces
     price = 1
     # wage of workers in the firm
     wage = 40
-    # the quantity sold the last period
-    quantity_sold = 0
     # the quantity the firm wants to produce
     desired_production = 0
 
     def __init__(self, identifier, industry, stock, domestic_capital, foreign_capital, firm_workers, cash,
                  production_function, production_behaviour):
+        # identifier to keep track
         self.identifier = identifier
+        # the industry where the firm operates
         self.industry = industry
+        # stock of the good it produces
         self.stock = stock
+        # list of capital of which the firm disposes
         self.domestic_capital = domestic_capital
         self.foreign_capital = foreign_capital
+        # list of workers of which the firm disposes
         self.firm_workers = firm_workers
         for worker in self.firm_workers:
             worker.employed = True
             worker.wage = self.wage
+        # amount of money
         self.cash = cash
+        # type of production function
         self.production_function = production_function
+        # how the firm decides the quantity and price of the period
         self.production_behaviour = production_behaviour
         # quantity sold in the previous period arbitrarily set at 10, change?
         self.quantity_sold = 10
@@ -303,7 +282,6 @@ class Firm:
                 worker.wage = 0
                 worker.employed = False
 
-
     # hiring or not hiring should be a short term calculation based on short term production necesities
     def hire(self, searching_workers):
         objective_qty_workers = self.production_function.required_workers(self.desired_production,
@@ -316,7 +294,6 @@ class Firm:
             # WRONG, should receive a wage equal to his reservation wage, needs individual wages inside a firm
             new_worker.wage = self.wage
             new_worker.employed = True
-
 
 
 # variables that characterize the economy
@@ -335,7 +312,7 @@ def setup_economy():
 
 # setup multidispatch for when there are multiple ways to set up the economy
 @multipledispatch.dispatch(object)
-def setup_economy(data):
+def setup_economy(info):
     pass
 
 
@@ -347,7 +324,7 @@ def create_consumers():
     global consumers
     global consumer_identifier
     for i in range(0, 1000):
-        consumers.append(Consumer(consumer_identifier,BasicConsumptionSavingHeuristicBehaviour(0.9),
+        consumers.append(Consumer(consumer_identifier, BasicConsumptionSavingHeuristicBehaviour(0.9),
                                   MinFoodFixedProportionsConsumption(), 1, False))
         consumer_identifier += 1
 
@@ -459,7 +436,6 @@ def manage_economy(periods):
             # if consumer.employed:
             #     print(f"(after) In period {period} consumer {consumer.identifier} has a wealth of {consumer.wealth}")
 
-
         log({"Category": ["number of firms", "stock", "domestic_capital", "foreign_capital", "firm_workers", "cash"]})
 
         for industry in industries:
@@ -481,10 +457,9 @@ def log(log_info):
     data = data | log_info
 
 
-# UTLITY METHODS
+# UTILITY METHODS
 # handle consumer to business
 def handle_consumer_transaction(consumer, industry, amount):
-
 
     # if no firm in the industry has stock, return
     if industry.is_stock_zero():
