@@ -271,17 +271,15 @@ class Firm:
     def produce(self):
         self.price = self.production_behaviour.get_price(self.price, self.stock)
 
-        # print("PERIOD " + str(period) + ": firm in industry " + self.industry.name +
-        #       " sold " + str(self.quantity_sold) + " last period and has a stock of " +
-        #       str(self.stock) + " while it wants a stock of 100")
+        # print(f"Period {period}: firm in industry {self.industry.name} sold {self.quantity_sold} "
+        #       f"last period and has a stock of {self.stock} while it wants a stock of 100")
 
-        self.stock += math.floor(min(
+        new_prod = math.floor(min(
             self.desired_production,
             self.production_function.produce(self.firm_workers, self.domestic_capital, self.foreign_capital)))
 
-        # print("therefore it produces: " + str(math.floor(min(
-        #     self.desired_production,
-        #     self.production_function.produce(self.firm_workers, self.domestic_capital, self.foreign_capital)))))
+        self.stock += new_prod
+        # print(f"therefore it produces: {new_prod}")
 
         self.quantity_sold = 0
 
@@ -456,12 +454,10 @@ def manage_economy(periods):
         random.shuffle(consumers)
         for consumer in consumers:
             # if consumer.employed:
-            #     print("(before) In period: " + str(period) + " consumer " + str(consumer.identifier)
-            #           + " has a wealth of " + str(consumer.wealth))
+            #     print(f"(before) In period {period} consumer {consumer.identifier} has a wealth of {consumer.wealth}")
             consumer.consume()
             # if consumer.employed:
-            #     print("(after) In period: " + str(period) + " consumer " + str(consumer.identifier)
-            #           + " has a wealth of " + str(consumer.wealth))
+            #     print(f"(after) In period {period} consumer {consumer.identifier} has a wealth of {consumer.wealth}")
 
 
         log({"Category": ["number of firms", "stock", "domestic_capital", "foreign_capital", "firm_workers", "cash"]})
@@ -489,11 +485,9 @@ def log(log_info):
 # handle consumer to business
 def handle_consumer_transaction(consumer, industry, amount):
 
-    # print("consumer wants to spend " + str(amount) + " in industry " + industry.name)
 
     # if no firm in the industry has stock, return
     if industry.is_stock_zero():
-        # print("case 1")
         return
 
     # get the firm with the cheapest price from the industry
@@ -501,7 +495,6 @@ def handle_consumer_transaction(consumer, industry, amount):
 
     # if the amount of money is not enough to buy a single unit return
     if firm.price > amount:
-        # print("case 2")
         return
 
     # if the number of units the consumer buys is higher than the stock from the firm,
